@@ -1,176 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Skills Matrix Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <style>
-    .vendor-icon {
-      width: 20px;
-      height: 20px;
-      display: inline-block;
-      vertical-align: middle;
-      margin-right: 6px;
-      border-radius: 4px;
-    }
-  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 text-gray-900 font-sans">
-  <div class="max-w-6xl mx-auto p-6">
-    <h1 class="text-3xl font-bold text-blue-900 mb-6">Engineer Skills Matrix Dashboard</h1>
+<body class="bg-white text-gray-800">
+  <div class="max-w-7xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">Skills Matrix Dashboard</h1>
 
-    <button onclick="exportCharts()" class="mb-6 px-4 py-2 bg-green-600 text-white rounded shadow hover:bg-green-700">
-      Export Dashboards
-    </button>
+    <div>
+      <button onclick="exportToCSV()" class="bg-blue-600 text-white px-4 py-2 rounded">Export Report</button>
+    </div>
 
-    <canvas id="barChart" class="bg-white rounded shadow p-4 mb-10"></canvas>
-    <canvas id="quadrantChart" class="bg-white rounded shadow p-4"></canvas>
+    <!-- Timeline Toggle -->
+    <div class="mb-4">
+      <label for="timeline" class="mr-2 font-semibold">View:</label>
+      <select id="timeline" class="border px-2 py-1">
+        <option value="monthly">Monthly</option>
+        <option value="quarterly">Quarterly</option>
+      </select>
+    </div>
+
+    <!-- Add Skill Form -->
+    <div class="mb-6">
+      <h2 class="text-xl font-semibold mb-2">Add Skill</h2>
+      <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+        <input id="name" class="border px-2 py-1" placeholder="Skill Name" />
+        <input id="vendor" class="border px-2 py-1" placeholder="Vendor" />
+        <input id="type" class="border px-2 py-1" placeholder="Type" />
+        <input id="score" type="number" class="border px-2 py-1" placeholder="Score" />
+        <input id="demand" type="number" class="border px-2 py-1" placeholder="Demand" />
+        <input id="coverage" type="number" class="border px-2 py-1" placeholder="Coverage" />
+        <button onclick="addSkill()" class="bg-green-600 text-white px-4 py-2 rounded col-span-2 md:col-span-1">Add</button>
+      </div>
+    </div>
+
+    <!-- Skills Table -->
+    <div class="overflow-x-auto mb-10">
+      <table class="min-w-full border border-gray-200 bg-white">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-2"><input class="w-full border px-1" placeholder="Filter Skill" oninput="filterTable(0, this.value)"></th>
+            <th class="px-4 py-2"><input class="w-full border px-1" placeholder="Filter Vendor" oninput="filterTable(1, this.value)"></th>
+            <th class="px-4 py-2"><input class="w-full border px-1" placeholder="Filter Type" oninput="filterTable(2, this.value)"></th>
+            <th class="px-4 py-2"><input class="w-full border px-1" placeholder="Filter Score" oninput="filterTable(3, this.value)"></th>
+            <th class="px-4 py-2"><input class="w-full border px-1" placeholder="Filter Demand" oninput="filterTable(4, this.value)"></th>
+            <th class="px-4 py-2"><input class="w-full border px-1" placeholder="Filter Coverage" oninput="filterTable(5, this.value)"></th>
+            <th class="px-4 py-2">Users</th>
+            <th class="px-4 py-2">COWS 🐄</th>
+            <th class="px-4 py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="matrix-table">
+          <tr>
+            <td class="border px-4 py-2">Azure</td>
+            <td class="border px-4 py-2">Microsoft</td>
+            <td class="border px-4 py-2">Cloud</td>
+            <td class="border px-4 py-2">8</td>
+            <td class="border px-4 py-2">9</td>
+            <td class="border px-4 py-2">7</td>
+            <td class="border px-4 py-2">5</td>
+            <td class="border px-4 py-2">560</td>
+            <td class="border px-4 py-2 edit-btn cursor-pointer">✏️</td>
+          </tr>
+          <tr>
+            <td class="border px-4 py-2">AWS</td>
+            <td class="border px-4 py-2">Amazon</td>
+            <td class="border px-4 py-2">Cloud</td>
+            <td class="border px-4 py-2">9</td>
+            <td class="border px-4 py-2">8</td>
+            <td class="border px-4 py-2">6</td>
+            <td class="border px-4 py-2">4</td>
+            <td class="border px-4 py-2">432</td>
+            <td class="border px-4 py-2 edit-btn cursor-pointer">✏️</td>
+          </tr>
+          <tr>
+            <td class="border px-4 py-2">Google Cloud</td>
+            <td class="border px-4 py-2">Google</td>
+            <td class="border px-4 py-2">Cloud</td>
+            <td class="border px-4 py-2">7</td>
+            <td class="border px-4 py-2">7</td>
+            <td class="border px-4 py-2">5</td>
+            <td class="border px-4 py-2">3</td>
+            <td class="border px-4 py-2">315</td>
+            <td class="border px-4 py-2 edit-btn cursor-pointer">✏️</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-xl font-semibold">Bar Chart</h2>
+          <button onclick="openChart('barModal')" class="text-sm text-blue-500 hover:underline">Pop-out</button>
+        </div>
+        <canvas id="barChart"></canvas>
+      </div>
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-xl font-semibold">Quadrant Chart</h2>
+          <button onclick="openChart('quadModal')" class="text-sm text-blue-500 hover:underline">Pop-out</button>
+        </div>
+        <canvas id="quadrantChart" width="600" height="400"></canvas>
+      </div>
+    </div>
   </div>
-
-  <script>
-    const vendorIcons = {
-      Microsoft: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoft.svg",
-      Amazon: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/amazonaws.svg",
-      Salesforce: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/salesforce.svg",
-      Fortinet: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/fortinet.svg",
-      Broadcom: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/vmware.svg"
-    };
-
-    const brandColors = {
-      Microsoft: "#F25022",
-      Amazon: "#FF9900",
-      Salesforce: "#00A1E0",
-      Fortinet: "#EE3124",
-      Broadcom: "#CB2026"
-    };
-
-    const skills = [
-      { name: "Azure", vendor: "Microsoft", score: 85, demand: 9, coverage: 7 },
-      { name: "AWS", vendor: "Amazon", score: 70, demand: 8, coverage: 5 },
-      { name: "Salesforce", vendor: "Salesforce", score: 60, demand: 6, coverage: 4 },
-      { name: "Fortinet", vendor: "Fortinet", score: 50, demand: 5, coverage: 6 },
-      { name: "VMware", vendor: "Broadcom", score: 90, demand: 7, coverage: 9 }
-    ];
-
-    const useCases = [
-      { title: "Hybrid Cloud Migration", tech: "Azure", points: 10 },
-      { title: "Zero Trust Rollout", tech: "Fortinet", points: 10 },
-      { title: "vSAN Deployment", tech: "VMware", points: 10 }
-    ];
-
-    function renderBarChart() {
-      const ctx = document.getElementById("barChart").getContext("2d");
-      new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: skills.map(s => s.name),
-          datasets: [{
-            label: "Total Score",
-            data: skills.map(skill => skill.score + useCases.filter(u => u.tech === skill.name).reduce((sum, u) => sum + u.points, 0)),
-            backgroundColor: skills.map(skill => brandColors[skill.vendor] || "#3b82f6")
-          }]
-        },
-        options: {
-          plugins: {
-            title: {
-              display: true,
-              text: "Total Skill Score Including Use Case Bonus"
-            },
-            legend: { display: true },
-            tooltip: {
-              callbacks: {
-                label: ctx => `${ctx.label}: ${ctx.parsed.y}`
-              }
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          }
-        }
-      });
-    }
-
-    function renderQuadrantChart() {
-      const ctx = document.getElementById("quadrantChart").getContext("2d");
-      const images = {};
-      const promises = skills.map(skill => {
-        return new Promise(resolve => {
-          const img = new Image();
-          img.src = vendorIcons[skill.vendor];
-          img.onload = () => {
-            images[skill.name] = img;
-            resolve();
-          };
-        });
-      });
-
-      Promise.all(promises).then(() => {
-        new Chart(ctx, {
-          type: "scatter",
-          data: {
-            datasets: skills.map(skill => ({
-              label: skill.name,
-              data: [{ x: skill.demand, y: skill.coverage }],
-              backgroundColor: brandColors[skill.vendor] || "#3b82f6",
-              pointStyle: images[skill.name],
-              pointRadius: 12,
-              borderColor: "#000",
-              borderWidth: 1
-            }))
-          },
-          options: {
-            plugins: {
-              title: {
-                display: true,
-                text: "Skill Demand vs Certification Coverage"
-              },
-              legend: {
-                position: 'right',
-                labels: {
-                  usePointStyle: true
-                }
-              },
-              tooltip: {
-                callbacks: {
-                  label: ctx => `${ctx.dataset.label}: Demand ${ctx.parsed.x}, Coverage ${ctx.parsed.y}`
-                }
-              }
-            },
-            scales: {
-              x: {
-                title: { display: true, text: "Demand (1–10)" },
-                min: 0, max: 10
-              },
-              y: {
-                title: { display: true, text: "Coverage (1–10)" },
-                min: 0, max: 10
-              }
-            }
-          }
-        });
-      });
-    }
-
-    function exportCharts() {
-      const bar = document.getElementById("barChart");
-      const quad = document.getElementById("quadrantChart");
-      const link = document.createElement("a");
-      [bar, quad].forEach((canvas, i) => {
-        link.href = canvas.toDataURL("image/png");
-        link.download = i === 0 ? "bar-chart.png" : "quadrant-chart.png";
-        link.click();
-      });
-    }
-
-    // Trigger charts on load
-    window.onload = () => {
-      renderBarChart();
-      renderQuadrantChart();
-    };
-  </script>
 </body>
 </html>

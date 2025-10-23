@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Skills Matrix Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .vendor-icon {
+      width: 20px;
+      height: 20px;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 6px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+  <div class="max-w-6xl mx-auto p-6">
+    <h1 class="text-3xl font-bold text-blue-900 mb-6">Engineer Skills Matrix Dashboard</h1>
+
+    <button onclick="exportCharts()" class="mb-6 px-4 py-2 bg-green-600 text-white rounded shadow hover:bg-green-700">
+      Export Dashboards
+    </button>
+
+    <canvas id="barChart" class="bg-white rounded shadow p-4 mb-10"></canvas>
+    <canvas id="quadrantChart" class="bg-white rounded shadow p-4"></canvas>
+  </div>
+
+  <script>
+    const vendorIcons = {
+      Microsoft: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/microsoft.svg",
+      Amazon: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/amazonaws.svg",
+      Salesforce: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/salesforce.svg",
+      Fortinet: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/fortinet.svg",
+      Broadcom: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/vmware.svg"
+    };
+
+    const brandColors = {
+      Microsoft: "#F25022",
+      Amazon: "#FF9900",
+      Salesforce: "#00A1E0",
+      Fortinet: "#EE3124",
+      Broadcom: "#CB2026"
+    };
+
+    const skills = [
+      { name: "Azure", vendor: "Microsoft", score: 85, demand: 9, coverage: 7 },
+      { name: "AWS", vendor: "Amazon", score: 70, demand: 8, coverage: 5 },
+      { name: "Salesforce", vendor: "Salesforce", score: 60, demand: 6, coverage: 4 },
+      { name: "Fortinet", vendor: "Fortinet", score: 50, demand: 5, coverage: 6 },
+      { name: "VMware", vendor: "Broadcom", score: 90, demand: 7, coverage: 9 }
+    ];
+
+    const useCases = [
+      { title: "Hybrid Cloud Migration", tech: "Azure", points: 10 },
+      { title: "Zero Trust Rollout", tech: "Fortinet", points: 10 },
+      { title: "vSAN Deployment", tech: "VMware", points: 10 }
+    ];
+
+    function renderBarChart() {
+      const ctx = document.getElementById("barChart").getContext("2d");
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: skills.map(s => s.name),
+          datasets: [{
+            label: "Total Score",
+            data: skills.map(skill => skill.score + useCases.filter(u => u.tech === skill.name).reduce((sum, u) => sum + u.points, 0)),
+            backgroundColor: skills.map(skill => brandColors[skill.vendor] || "#3b82f6")
+          }]
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: "Total Skill Score Including Use Case Bonus"
+            },
+            legend: { display: true },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.label}: ${ctx.parsed.y}`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    function renderQuadrantChart() {
+      const ctx = document.getElementById("quadrantChart").getContext("2d");
+      const images = {};
+      const promises = skills.map(skill => {
+        return new Promise(resolve => {
+          const img = new Image();
+          img.src = vendorIcons[skill.vendor];
+          img.onload = () => {
+            images[skill.name] = img;
+            resolve();
+          };
+        });
+      });
+
+      Promise.all(promises).then(() => {
+        new Chart(ctx, {
+          type: "scatter",
+          data: {
+            datasets: skills.map(skill => ({
+              label: skill.name,
+              data: [{ x: skill.demand, y: skill.coverage }],
+              backgroundColor: brandColors[skill.vendor] || "#3b82f6",
+              pointStyle: images[skill.name],
+              pointRadius: 12,
+              borderColor: "#000",
+              borderWidth: 1
+            }))
+          },
+          options: {
+            plugins: {
+              title: {
+                display: true,
+                text: "Skill Demand vs Certification Coverage"
+              },
+              legend: {
+                position: 'right',
+                labels: {
+                  usePointStyle: true
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: ctx => `${ctx.dataset.label}: Demand ${ctx.parsed.x}, Coverage ${ctx.parsed.y}`
+                }
+              }
+            },
+            scales: {
+              x: {
+                title: { display: true, text: "Demand (1–10)" },
+                min: 0, max: 10
+              },
+              y: {
+                title: { display: true, text: "Coverage (1–10)" },
+                min: 0, max: 10
+              }
+            }
+          }
+        });
+      });
+    }
+
+    function exportCharts() {
+      const bar = document.getElementById("barChart");
+      const quad = document.getElementById("quadrantChart");
+      const link = document.createElement("a");
+      [bar, quad].forEach((canvas, i) => {
+        link.href = canvas.toDataURL("image/png");
+        link.download = i === 0 ? "bar-chart.png" : "quadrant-chart.png";
+        link.click();
+      });
+    }
+
+    // Trigger charts on load
+    window.onload = () => {
+      renderBarChart();
+      renderQuadrantChart();
+    };
+  </script>
+</body>
+</html>
